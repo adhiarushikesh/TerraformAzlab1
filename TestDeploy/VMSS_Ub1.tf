@@ -3,149 +3,99 @@ provider "azurerm" {
     version = "=1.20.0"
 }
 
-resource "azurerm_resource_group" "test" {
-  name     = "vmsstestRG"
-  location = "southeastasia"
+# Create a resource group
+resource "azurerm_resource_group" "rg" {
+    name     = "RG1"
+    location = "southeastasia"
+}
+# Create virtual network
+resource "azurerm_virtual_network" "vnet" {
+    name                = "myTFVnet"
+    address_space       = ["10.0.0.0/16"]
+    location            = "southeastasia"
+    resource_group_name = "${azurerm_resource_group.rg.name}"
 }
 
-resource "azurerm_virtual_network" "test" {
-  name                = "acctvn"
-  address_space       = ["10.0.0.0/16"]
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
+# Create subnet
+resource "azurerm_subnet" "subnet" {
+    name                 = "myTFSubnet"
+    resource_group_name  = "${azurerm_resource_group.rg.name}"
+    virtual_network_name = "${azurerm_virtual_network.vnet.name}"
+    address_prefix       = "10.0.1.0/24"
 }
 
-resource "azurerm_subnet" "test" {
-  name                 = "acctsub"
-  resource_group_name  = "${azurerm_resource_group.test.name}"
-  virtual_network_name = "${azurerm_virtual_network.test.name}"
-  address_prefix       = "10.0.2.0/24"
-}
-
-resource "azurerm_public_ip" "test" {
-  name                = "test"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
-  public_ip_address_allocation   = "Static"
-  domain_name_label   = "${azurerm_resource_group.test.name}"
-
-  tags {
-    environment = "staging"
-  }
-}
-
-resource "azurerm_lb" "test" {
-  name                = "test"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
-  frontend_ip_configuration {
-    name                 = "test"
-    public_ip_address_id = "${azurerm_public_ip.test.id}"
-  }
-}
-
-
-
-resource "azurerm_lb_backend_address_pool" "bpepool" {
-  resource_group_name = "${azurerm_resource_group.test.name}"
-  loadbalancer_id     = "${azurerm_lb.test.id}"
-  name                = "BackEndAddressPool"
-}
-
-resource "azurerm_lb_nat_pool" "lbnatpool" {
-  count                          = 3
-  resource_group_name            = "${azurerm_resource_group.test.name}"
-  name                           = "ssh"
-  loadbalancer_id                = "${azurerm_lb.test.id}"
-  protocol                       = "Tcp"
-  frontend_port_start            = 50000
-  frontend_port_end              = 50119
-  backend_port                   = 22
-  frontend_ip_configuration_name = "PublicIPAddress"
-}
-
-resource "azurerm_lb_probe" "test" {
-  resource_group_name = "${azurerm_resource_group.test.name}"
-  loadbalancer_id     = "${azurerm_lb.test.id}"
-  name                = "http-probe"
-  request_path        = "/health"
-  port                = 8080
-}
-
-resource "azurerm_virtual_machine_scale_set" "test" {
-  name                = "mytestscaleset-1"
-  location            = "${azurerm_resource_group.test.location}"
-  resource_group_name = "${azurerm_resource_group.test.name}"
-
-  # automatic rolling upgrade
-  automatic_os_upgrade = true
-  upgrade_policy_mode  = "Rolling"
-
-  rolling_upgrade_policy {
-    max_batch_instance_percent              = 20
-    max_unhealthy_instance_percent          = 20
-    max_unhealthy_upgraded_instance_percent = 5
-    pause_time_between_batches              = "PT0S"
-  }
-
-  # required when using rolling upgrade policy
-  health_probe_id = "${azurerm_lb_probe.test.id}"
-
-  sku {
-    name     = "Standard_DS1_v2"
-    tier     = "Standard"
-    capacity = 2
-  }
-
-  storage_profile_image_reference {
-    publisher = "Canonical"
-    offer     = "UbuntuServer"
-    sku       = "18.04-LTS"
-    version   = "latest"
-  }
-
-  storage_profile_os_disk {
-    name              = ""
-    caching           = "ReadWrite"
-    create_option     = "FromImage"
-    managed_disk_type = "Standard_LRS"
-  }
-
-  storage_profile_data_disk {
-    lun           = 0
-    caching       = "ReadWrite"
-    create_option = "Empty"
-    disk_size_gb  = 10
-  }
-
-  os_profile {
-    computer_name_prefix = "testvm"
-    admin_username       = "tadmin"
-  }
-
-  os_profile_linux_config {
-    disable_password_authentication = true
-
-    ssh_keys {
-      path     = "C:/opscode/Terraform/TestDeploy"
-      key_data = "${file("~/.ssh/demo_key.pub")}"
+# Create public IP
+resource "azurerm_public_ip" "publicip" {
+    name                         = "myTFPublicIP"
+    location                     = "southeastasia"
+    resource_group_name          = "${azurerm_resource_group.rg.name}"
+    public_ip_address_allocation = "dynamic"
     }
-  }
 
-  network_profile {
-    name    = "terraformnetworkprofile"
-    primary = true
+# Create Network Security Group and rule
+resource "azurerm_network_security_group" "nsg" {
+    name                = "myTFNSG"
+    location            = "southeastasia"
+    resource_group_name = "${azurerm_resource_group.rg.name}"
+
+    security_rule {
+        name                       = "SSH"
+        priority                   = 1001
+        direction                  = "Inbound"
+        access                     = "Allow"
+        protocol                   = "Tcp"
+        source_port_range          = "*"
+        destination_port_range     = "22"
+        source_address_prefix      = "*"
+        destination_address_prefix = "*"
+    }
+}
+
+# Create network interface
+resource "azurerm_network_interface" "nic" {
+    name                      = "myNIC"
+    location                  = "southeastasia"
+    resource_group_name       = "${azurerm_resource_group.rg.name}"
+    network_security_group_id = "${azurerm_network_security_group.nsg.id}"
 
     ip_configuration {
-      name                                   = "TestIPConfiguration"
-      primary                                = true
-      subnet_id                              = "${azurerm_subnet.test.id}"
-      load_balancer_backend_address_pool_ids = ["${azurerm_lb_backend_address_pool.bpepool.id}"]
-      load_balancer_inbound_nat_rules_ids    = ["${element(azurerm_lb_nat_pool.lbnatpool.*.id, count.index)}"]
+        name                          = "myNICConfg"
+        subnet_id                     = "${azurerm_subnet.subnet.id}"
+        private_ip_address_allocation = "dynamic"
+        public_ip_address_id          = "${azurerm_public_ip.publicip.id}"
     }
-  }
+}
 
-  tags {
-    environment = "staging"
-  }
+# Create a Linux virtual machine
+resource "azurerm_virtual_machine" "vm" {
+    name                  = "myTFVM"
+    location              = "southeastasia"
+    resource_group_name   = "${azurerm_resource_group.rg.name}"
+    network_interface_ids = ["${azurerm_network_interface.nic.id}"]
+    vm_size               = "Standard_B1ms"
+
+    storage_os_disk {
+        name              = "myOsDisk"
+        caching           = "ReadWrite"
+        create_option     = "FromImage"
+        managed_disk_type = "Standard_LRS"
+    }
+
+    storage_image_reference {
+        publisher = "Canonical"
+        offer     = "UbuntuServer"
+        sku       = "16.04.0-LTS"
+        version   = "latest"
+    }
+
+    os_profile {
+        computer_name  = "myTFVM"
+        admin_username = "tadmin"
+        admin_password = "PL@net09!"
+    }
+
+    os_profile_linux_config {
+        disable_password_authentication = false
+    }
+
 }
