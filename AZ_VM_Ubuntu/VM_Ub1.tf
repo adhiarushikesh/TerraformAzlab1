@@ -1,3 +1,29 @@
+/*
+* Demonstrate use of provisioner 'remote-exec' to execute a command
+* on a new VM instance.
+*/
+
+/*
+* NOTE: It is very poor practice to hardcode sensitive information
+* such as user name, password, etc. Hardcoded values are used here
+* only to simplify the tutorial.
+*/
+variable "admin_username" {
+    default = "tadmin"
+}
+variable "admin_password" {
+    default = "PL@net09"
+}
+
+variable "resource_prefix" {
+    default = "RG"
+}
+
+# You'll usually want to set this to a region near you.
+variable "location" {
+    default = "southeastasia"
+}
+
 # Configure the Microsoft Azure Provider.
 provider "azurerm" {
     version = "=1.20.0"
@@ -5,20 +31,20 @@ provider "azurerm" {
 
 # Create a resource group
 resource "azurerm_resource_group" "rg" {
-    name     = "RG1"
-    location = "southeastasia"
+    name     = "${var.resource_prefix}2"
+    location = "${var.location}"
 }
 # Create virtual network
 resource "azurerm_virtual_network" "vnet" {
-    name                = "myTFVnet"
+    name                = "${azurerm_resource_group.rg.name}_VM_Vnet"
     address_space       = ["10.0.0.0/16"]
-    location            = "southeastasia"
+    location            = "${var.location}"
     resource_group_name = "${azurerm_resource_group.rg.name}"
 }
 
 # Create subnet
 resource "azurerm_subnet" "subnet" {
-    name                 = "myTFSubnet"
+    name                 = "${azurerm_resource_group.rg.name}_VM_Subnet"
     resource_group_name  = "${azurerm_resource_group.rg.name}"
     virtual_network_name = "${azurerm_virtual_network.vnet.name}"
     address_prefix       = "10.0.1.0/24"
@@ -26,16 +52,16 @@ resource "azurerm_subnet" "subnet" {
 
 # Create public IP
 resource "azurerm_public_ip" "publicip" {
-    name                         = "myTFPublicIP"
-    location                     = "southeastasia"
+    name                         = "${azurerm_resource_group.rg.name}_VM_PublicIP"
+    location                     = "${var.location}"
     resource_group_name          = "${azurerm_resource_group.rg.name}"
     public_ip_address_allocation = "dynamic"
     }
 
 # Create Network Security Group and rule
 resource "azurerm_network_security_group" "nsg" {
-    name                = "myTFNSG"
-    location            = "southeastasia"
+    name                = "${azurerm_resource_group.rg.name}_VM_NSG"
+    location            = "${var.location}"
     resource_group_name = "${azurerm_resource_group.rg.name}"
 
     security_rule {
@@ -53,13 +79,13 @@ resource "azurerm_network_security_group" "nsg" {
 
 # Create network interface
 resource "azurerm_network_interface" "nic" {
-    name                      = "myNIC"
-    location                  = "southeastasia"
+    name                      = "${azurerm_resource_group.rg.name}_VM_NIC"
+    location                  = "${var.location}"
     resource_group_name       = "${azurerm_resource_group.rg.name}"
     network_security_group_id = "${azurerm_network_security_group.nsg.id}"
 
     ip_configuration {
-        name                          = "myNICConfg"
+        name                          = "${azurerm_resource_group.rg.name}_VM_NICConfg"
         subnet_id                     = "${azurerm_subnet.subnet.id}"
         private_ip_address_allocation = "dynamic"
         public_ip_address_id          = "${azurerm_public_ip.publicip.id}"
@@ -68,8 +94,8 @@ resource "azurerm_network_interface" "nic" {
 
 # Create a Linux virtual machine
 resource "azurerm_virtual_machine" "vm" {
-    name                  = "myTFVM"
-    location              = "southeastasia"
+    name                  = "${azurerm_resource_group.rg.name}VM1"
+    location              = "${var.location}"
     resource_group_name   = "${azurerm_resource_group.rg.name}"
     network_interface_ids = ["${azurerm_network_interface.nic.id}"]
     vm_size               = "Standard_B1ms"
@@ -89,9 +115,9 @@ resource "azurerm_virtual_machine" "vm" {
     }
 
     os_profile {
-        computer_name  = "myTFVM"
-        admin_username = "tadmin"
-        admin_password = "PL@net09!"
+        computer_name  = "${azurerm_resource_group.rg.name}VM1"
+        admin_username = "${var.admin_username}"
+        admin_password = "${var.admin_password}"
     }
 
     os_profile_linux_config {
