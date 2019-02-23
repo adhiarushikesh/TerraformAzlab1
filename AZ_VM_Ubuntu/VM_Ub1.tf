@@ -101,7 +101,7 @@ resource "azurerm_virtual_machine" "vm" {
     vm_size               = "Standard_B1ms"
 
     storage_os_disk {
-        name              = "myOsDisk"
+        name              = "${azurerm_resource_group.rg.name}_OSDisk"
         caching           = "ReadWrite"
         create_option     = "FromImage"
         managed_disk_type = "Standard_LRS"
