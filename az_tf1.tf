@@ -30,7 +30,7 @@ resource "azurerm_public_ip" "publicip" {
     location                     = "southeastasia"
     resource_group_name          = "${azurerm_resource_group.rg.name}"
     public_ip_address_allocation = "dynamic"
-    }
+
 }
 
 # Create Network Security Group and rule
