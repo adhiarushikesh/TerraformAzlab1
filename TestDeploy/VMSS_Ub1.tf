@@ -1,3 +1,8 @@
+# Configure the Microsoft Azure Provider.
+provider "azurerm" {
+    version = "=1.20.0"
+}
+
 resource "azurerm_resource_group" "test" {
   name     = "vmsstestRG"
   location = "southeastasia"
@@ -21,7 +26,7 @@ resource "azurerm_public_ip" "test" {
   name                = "test"
   location            = "${azurerm_resource_group.test.location}"
   resource_group_name = "${azurerm_resource_group.test.name}"
-  allocation_method   = "Static"
+  public_ip_address_allocation   = "Static"
   domain_name_label   = "${azurerm_resource_group.test.name}"
 
   tags {
@@ -33,12 +38,13 @@ resource "azurerm_lb" "test" {
   name                = "test"
   location            = "${azurerm_resource_group.test.location}"
   resource_group_name = "${azurerm_resource_group.test.name}"
-
   frontend_ip_configuration {
-    name                 = "PublicIPAddress"
+    name                 = "test"
     public_ip_address_id = "${azurerm_public_ip.test.id}"
   }
 }
+
+
 
 resource "azurerm_lb_backend_address_pool" "bpepool" {
   resource_group_name = "${azurerm_resource_group.test.name}"
@@ -121,7 +127,7 @@ resource "azurerm_virtual_machine_scale_set" "test" {
     disable_password_authentication = true
 
     ssh_keys {
-      path     = "/home/myadmin/.ssh/authorized_keys"
+      path     = "C:/opscode/Terraform/TestDeploy"
       key_data = "${file("~/.ssh/demo_key.pub")}"
     }
   }
