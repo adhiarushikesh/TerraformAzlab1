@@ -1,0 +1,16 @@
+provider "aws" {
+  access_key = "AKIAJROBTPB2HWJV3ECQ"
+  secret_key = "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"
+  region     = "ap-southeast-1"
+}
+
+# New resource for the S3 bucket our application will use.
+resource "aws_s3_bucket" "b" {
+  bucket = "terraform-getting-started-guide"
+  acl    = "private"
+  region = "ap-southeast-1"
+  tags = {
+    Name        = "My s3 bucket"
+    Environment = "Terraform Devlab"
+  }
+}
