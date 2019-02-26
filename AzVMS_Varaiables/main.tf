@@ -1,33 +1,18 @@
-/*
-* Demonstrate use of provisioner 'remote-exec' to execute a command
-* on a new VM instance.
-*/
-/*
-* NOTE: It is very poor practice to hardcode sensitive information
-* such as user name, password, etc. Hardcoded values are used here
-* only to simplify the tutorial.
-*/
-
-#variable "admin_username" {
-#    default = "tadmin"
-#}
-#variable "admin_password" {
-#    default = "PL@net09"
-#}
 # Configure the Microsoft Azure Provider.
 provider "azurerm" {
     version = "=1.20.0"
 }
+
 # Create a resource group
 resource "azurerm_resource_group" "rg" {
-    name     = "${var.resource_prefix}09"
+    name     = "${var.prefix}TFRG01"
     location = "${var.location}"
     tags     = "${var.tags}"
 }
 
 # Create virtual network
 resource "azurerm_virtual_network" "vnet" {
-    name                = "${azurerm_resource_group.rg.name}_VM_Vnet"
+    name                = "${var.prefix}TFVnet"
     address_space       = ["10.0.0.0/16"]
     location            = "${var.location}"
     resource_group_name = "${azurerm_resource_group.rg.name}"
@@ -36,7 +21,7 @@ resource "azurerm_virtual_network" "vnet" {
 
 # Create subnet
 resource "azurerm_subnet" "subnet" {
-    name                 = "${azurerm_resource_group.rg.name}_VM_Subnet"
+    name                 = "${var.prefix}TFSubnet"
     resource_group_name  = "${azurerm_resource_group.rg.name}"
     virtual_network_name = "${azurerm_virtual_network.vnet.name}"
     address_prefix       = "10.0.1.0/24"
@@ -44,19 +29,20 @@ resource "azurerm_subnet" "subnet" {
 
 # Create public IP
 resource "azurerm_public_ip" "publicip" {
-    name                         = "${azurerm_resource_group.rg.name}_VM_PublicIP"
+    name                         = "${var.prefix}TFPublicIP"
     location                     = "${var.location}"
     resource_group_name          = "${azurerm_resource_group.rg.name}"
     public_ip_address_allocation = "dynamic"
     tags                         = "${var.tags}"
-    }
+}
 
 # Create Network Security Group and rule
 resource "azurerm_network_security_group" "nsg" {
-    name                = "${azurerm_resource_group.rg.name}_VM_NSG"
+    name                = "${var.prefix}TFNSG"
     location            = "${var.location}"
     resource_group_name = "${azurerm_resource_group.rg.name}"
     tags                = "${var.tags}"
+
     security_rule {
         name                       = "SSH"
         priority                   = 1001
@@ -72,13 +58,14 @@ resource "azurerm_network_security_group" "nsg" {
 
 # Create network interface
 resource "azurerm_network_interface" "nic" {
-    name                      = "${azurerm_resource_group.rg.name}_VM_NIC"
+    name                      = "${var.prefix}NIC"
     location                  = "${var.location}"
     resource_group_name       = "${azurerm_resource_group.rg.name}"
     network_security_group_id = "${azurerm_network_security_group.nsg.id}"
     tags                      = "${var.tags}"
+
     ip_configuration {
-        name                          = "${azurerm_resource_group.rg.name}_VM_NICConfg"
+        name                          = "${var.prefix}NICConfg"
         subnet_id                     = "${azurerm_subnet.subnet.id}"
         private_ip_address_allocation = "dynamic"
         public_ip_address_id          = "${azurerm_public_ip.publicip.id}"
@@ -87,15 +74,15 @@ resource "azurerm_network_interface" "nic" {
 
 # Create a Linux virtual machine
 resource "azurerm_virtual_machine" "vm" {
-    name                  = "${azurerm_resource_group.rg.name}VM1"
+    name                  = "${var.prefix}TFVM1"
     location              = "${var.location}"
     resource_group_name   = "${azurerm_resource_group.rg.name}"
-    tags                  = "${var.tags}"
     network_interface_ids = ["${azurerm_network_interface.nic.id}"]
     vm_size               = "Standard_B1ms"
-    #vm_size              = "Standard_B2s"
+    tags                  = "${var.tags}"
+
     storage_os_disk {
-        name              = "${azurerm_resource_group.rg.name}_OSDisk"
+        name              = "${var.prefix}OsDisk"
         caching           = "ReadWrite"
         create_option     = "FromImage"
         managed_disk_type = "Standard_LRS"
@@ -109,7 +96,7 @@ resource "azurerm_virtual_machine" "vm" {
     }
 
     os_profile {
-        computer_name  = "${azurerm_resource_group.rg.name}VM3"
+        computer_name  = "${var.prefix}TFVM"
         admin_username = "${var.admin_username}"
         admin_password = "${var.admin_password}"
     }
@@ -117,7 +104,9 @@ resource "azurerm_virtual_machine" "vm" {
     os_profile_linux_config {
         disable_password_authentication = false
     }
- provisioner "file" {
+
+}
+provisioner "file" {
     connection {
     type = "ssh"
     user = "${var.admin_username}"
@@ -126,24 +115,9 @@ resource "azurerm_virtual_machine" "vm" {
     source = "C:/opscode/Terraform/AZVM_provisnior/newfile.txt"
     destination = "/tmp/newfile.txt"
  }
- provisioner "remote-exec" {
-    when = "destroy"
-    connection {
-    type = "ssh"
-    user     = "${var.admin_username}"
-    password = "${var.admin_password}"
-    }
-    inline = [
-    "ls -a",
-    "cat newfile.txt"
-    ]
-  }
-  output "ip" {
+output "ip" {
     value = "${azurerm_public_ip.publicip.ip_address}"
-  }
-
-  output "os_sku" {
+}
+output "os_sku" {
     value = "${lookup(var.sku, var.location)}"
-  }
-  
- }
+}

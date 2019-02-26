@@ -8,9 +8,9 @@ variable "admin_username" {
 variable "admin_password" {
     default = "PL@net09"
 }
-variable "resource_prefix" {
+variable "prefix" {
     type = "string"
-    default = "RG"
+    default = "my"
 }
 variable "tags" {
     type = "map"
