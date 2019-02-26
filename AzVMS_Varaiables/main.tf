@@ -5,7 +5,7 @@ provider "azurerm" {
 
 # Create a resource group
 resource "azurerm_resource_group" "rg" {
-    name     = "${var.prefix}TFRG01"
+    name     = "${var.prefix}TFRG02"
     location = "${var.location}"
     tags     = "${var.tags}"
 }
@@ -113,23 +113,23 @@ resource "azurerm_virtual_machine" "vm" {
         destination = "/tmp/newfile.txt"
     }
 
-    provisioner "remote-exec" {
-        when = "destroy"
-        connection {
-            type = "ssh"
-            user     = "${var.admin_username}"
-            password = "${var.admin_password}"
-        }
+    #provisioner "remote-exec" {
+        #when = "destroy"
+    #    connection {
+    #        type = "ssh"
+    #        user     = "${var.admin_username}"
+    #        password = "${var.admin_password}"
+    #   }
 
-        inline = [
-        "ls -a",
-        "cat newfile.txt"
-        ]
-    }
+    #   inline = [
+    #   "ls -a",
+    #   "cat newfile.txt"
+        #]
+    #}
 }
 
 output "ip" {
-    value = "${azurerm_public_ip.publicip.ip_address}"
+  value = "${azurerm_public_ip.publicip.ip_address}"
 }
 output "os_sku" {
     value = "${lookup(var.sku, var.location)}"
