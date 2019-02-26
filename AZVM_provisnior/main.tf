@@ -129,8 +129,8 @@ resource "azurerm_virtual_machine" "vm" {
     user = "${var.admin_username}"
     password = "${var.admin_password}"
     }
-    source = "newfile.txt"
-    destination = "./tmp/newfile.txt"
+    source = "C:/opscode/Terraform/AZVM_provisnior/newfile.txt"
+    destination = "/tmp/newfile.txt"
  }
  provisioner "remote-exec" {
     #when = "destroy"
@@ -141,7 +141,7 @@ resource "azurerm_virtual_machine" "vm" {
     }
     inline = [
     "ls -a",
-    "cat ./tmp/newfile.txt"
+    "cat newfile.txt"
     ]
   }
 
