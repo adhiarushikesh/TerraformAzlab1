@@ -2,6 +2,12 @@ variable "location" {
     default = "southeastasia"
 }
 
+variable "admin_username" {
+    default = "tadmin"
+}
+variable "admin_password" {
+    default = "PL@net09"
+}
 variable "resource_prefix" {
     type = "string"
     default = "RG"
