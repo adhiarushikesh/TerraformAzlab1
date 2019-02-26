@@ -100,21 +100,34 @@ resource "azurerm_virtual_machine" "vm" {
         admin_username = "${var.admin_username}"
         admin_password = "${var.admin_password}"
     }
-
     os_profile_linux_config {
         disable_password_authentication = false
     }
-
-}
-provisioner "file" {
-    connection {
-    type = "ssh"
-    user = "${var.admin_username}"
-    password = "${var.admin_password}"
+    provisioner "file" {
+        connection {
+            type = "ssh"
+            user = "${var.admin_username}"
+            password = "${var.admin_password}"
+        }
+        source = "C:/opscode/Terraform/AZVM_provisnior/newfile.txt"
+        destination = "/tmp/newfile.txt"
     }
-    source = "C:/opscode/Terraform/AZVM_provisnior/newfile.txt"
-    destination = "/tmp/newfile.txt"
- }
+
+    provisioner "remote-exec" {
+        when = "destroy"
+        connection {
+            type = "ssh"
+            user     = "${var.admin_username}"
+            password = "${var.admin_password}"
+        }
+
+        inline = [
+        "ls -a",
+        "cat newfile.txt"
+        ]
+    }
+}
+
 output "ip" {
     value = "${azurerm_public_ip.publicip.ip_address}"
 }

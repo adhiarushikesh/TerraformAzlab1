@@ -10,7 +10,7 @@ variable "admin_password" {
 }
 variable "prefix" {
     type = "string"
-    default = "my"
+    default = "RG"
 }
 variable "tags" {
     type = "map"
