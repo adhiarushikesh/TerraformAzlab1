@@ -8,7 +8,12 @@
 * only to simplify the tutorial.
 */
 
-
+#variable "admin_username" {
+#    default = "tadmin"
+#}
+#variable "admin_password" {
+#    default = "PL@net09"
+#}
 # Configure the Microsoft Azure Provider.
 provider "azurerm" {
     version = "=1.20.0"
@@ -35,7 +40,6 @@ resource "azurerm_subnet" "subnet" {
     resource_group_name  = "${azurerm_resource_group.rg.name}"
     virtual_network_name = "${azurerm_virtual_network.vnet.name}"
     address_prefix       = "10.0.1.0/24"
-    tags                = "${var.tags}"
 }
 
 # Create public IP
@@ -44,7 +48,7 @@ resource "azurerm_public_ip" "publicip" {
     location                     = "${var.location}"
     resource_group_name          = "${azurerm_resource_group.rg.name}"
     public_ip_address_allocation = "dynamic"
-    tags                = "${var.tags}"
+    tags                         = "${var.tags}"
     }
 
 # Create Network Security Group and rule
@@ -100,7 +104,7 @@ resource "azurerm_virtual_machine" "vm" {
     storage_image_reference {
         publisher = "Canonical"
         offer     = "UbuntuServer"
-        sku       = "16.04.0-LTS"
+        sku       = "${lookup(var.sku, var.location)}"
         version   = "latest"
     }
 
