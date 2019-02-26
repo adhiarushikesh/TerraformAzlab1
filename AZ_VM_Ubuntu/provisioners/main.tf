@@ -123,4 +123,26 @@ resource "azurerm_virtual_machine" "vm" {
     os_profile_linux_config {
         disable_password_authentication = false
     }
+    provisioner "file" {
+        connection {
+            type = "ssh"
+            user = "${var.admin_username}"
+            password = "${var.admin_password}"
+        }
+
+        source = "newfile.txt"
+        destination = "newfile.txt"
+    }
+    provisioner "remote-exec" {
+        connection {
+            type = "ssh"
+            user     = "${var.admin_username}"
+            password = "${var.admin_password}"
+        }
+        inline = [
+        "ls -a",
+        "cat newfile.txt"
+        ]
+    }
+
 }
