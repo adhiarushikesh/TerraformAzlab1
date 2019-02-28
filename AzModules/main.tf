@@ -1,21 +1,7 @@
-# declare variables and defaults
-variable "location" {
-    default = "southeastasia"
-    #test
-}
-variable "environment" {
-    default = "dev"
-}
-variable "vm_size" {
-    default = {
-        "dev"   = "Standard_B2s"
-        "prod"  = "Standard_D2s_v3"
-    }
-}
 
 # Create a resource group
 resource "azurerm_resource_group" "rg" {
-    name     = "myResourceGroup"
+    name     = "${var.environment}"
     location = "${var.location}"
 }
 
@@ -36,10 +22,11 @@ module "compute" {
     version           = "1.2.0"
     location          = "${var.location}"
     vnet_subnet_id    = "${element(module.network.vnet_subnets, 0)}"
-    admin_username    = "tadmin"
-    admin_password    = "PL@net09"
+    admin_username    = "${var.admin_username}"
+    admin_password    = "${var.admin_password}"
     remote_port       = "22"
     vm_os_simple      = "UbuntuServer"
     vm_size           = "${lookup(var.vm_size, var.environment)}"
     public_ip_dns     = ["zzdns"]
+    tags = "${var.tags}"
 }
