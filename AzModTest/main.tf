@@ -1,7 +1,7 @@
 variable module_base { default = "github.com/adhiarushikesh/TerraformAzlab1/tree/master/AzModTest" }
 
 module "resource_group" {
-  #source = "github.com/adhiarushikesh/TerraformAzlab1/tree/master/AzModTest//resource_group"
+  source = "github.com/adhiarushikesh/TerraformAzlab1/tree/master/AzModTest//resource_group"
   name = "${var.name}"
   location = "${var.location}"
 }
