@@ -1,13 +1,13 @@
-variable module_base { default = "github.com/stevendborrelli/azure-tf-modules/" }
+variable module_base { default = "github.com/adhiarushikesh/TerraformAzlab1/tree/master/AzModTest" }
 
 module "resource_group" {
-  source = "github.com/stevendborrelli/azure-tf-modules//resource_group"
+  #source = "github.com/adhiarushikesh/TerraformAzlab1/tree/master/AzModTest//resource_group"
   name = "${var.name}"
   location = "${var.location}"
 }
 
 module "virtual_network" {
-  source = "github.com/stevendborrelli/azure-tf-modules//virtual_network"
+  #source = "github.com/adhiarushikesh/TerraformAzlab1/tree/master/AzModTest//virtual_network"
   name = "${var.name}"
   location = "${var.location}"
   resource_group_name = "${module.resource_group.name}"
@@ -15,7 +15,7 @@ module "virtual_network" {
 }
 
 module "subnet" {
-  source = "github.com/stevendborrelli/azure-tf-modules//subnet"
+  #source = "github.com/adhiarushikesh/TerraformAzlab1/tree/master/AzModTest//subnet"
   name = "${var.name}"
   resource_group_name = "${module.resource_group.name}"
   virtual_network_name = "${module.virtual_network.name}"
@@ -23,21 +23,21 @@ module "subnet" {
 }
 
 module "storage_account" {
-  source = "github.com/stevendborrelli/azure-tf-modules//storage_account"
+  #source = "github.com/adhiarushikesh/TerraformAzlab1/tree/master/AzModTest//storage_account"
   account_name = "${var.name}osdisks"
   resource_group_name = "${module.resource_group.name}"
 }
 
 module "public_ips_control" {
   name = "control"
-  source = "github.com/stevendborrelli/azure-tf-modules//public_ip"
+  #source = "github.com/adhiarushikesh/TerraformAzlab1/tree/master/AzModTest//public_ip"
   location = "${var.location}"
   resource_group_name = "${module.resource_group.name}"
   count = "${var.control_count}"
 }
 
 module "vms_control" {
-  source = "github.com/stevendborrelli/azure-tf-modules//virtual_machines"
+  #source = "github.com/adhiarushikesh/TerraformAzlab1/tree/master/AzModTest//virtual_machines"
   name = "${var.name}-control"
   count = "${var.control_count}"
   vm_name = "control"
