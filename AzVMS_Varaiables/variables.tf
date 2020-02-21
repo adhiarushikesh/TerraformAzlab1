@@ -6,7 +6,7 @@ variable "admin_username" {
     default = "tadmin"
 }
 variable "admin_password" {
-    default = "PL@net09"
+    default = "P@ssw0rd"
 }
 variable "prefix" {
     type = "string"
